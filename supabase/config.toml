@@ -1,0 +1,4 @@
+project_id = "ypxrrvbibqaqlndithwb"
+
+[functions.generate-promo-item]
+verify_jwt = false
