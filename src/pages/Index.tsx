@@ -62,7 +62,7 @@ const Index = () => {
         <header className="text-center mb-12 space-y-4">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-3 bg-white rounded-2xl shadow-lg">
-              <img src={unbvsLogo} alt="UNBVS Logo" className="w-16 h-auto" />
+              <img src={unbvsLogo} alt="UNBVS Logo" className="w-32 h-auto" />
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground">
