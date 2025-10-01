@@ -13,35 +13,42 @@ serve(async (req) => {
 
   try {
     const { targetAudience, logoBase64 } = await req.json();
-    console.log('Generating promo item for target audience:', targetAudience);
+    console.log('Generating 5 promo items for target audience:', targetAudience);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Step 1: Use Gemini Flash to analyze audience and suggest creative promo item
-    const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `Você é um especialista em brindes corporativos criativos do mercado brasileiro. 
-            Sugira um brinde ÚNICO e FORA DO CONVENCIONAL (nada de canetas, cadernos ou chaveiros comuns).
-            Pense em: gadgets tecnológicos inusitados, itens sustentáveis inovadores, acessórios lifestyle diferenciados.
-            Responda SEMPRE em português do Brasil.`
-          },
-          {
-            role: 'user',
-            content: `Público-alvo: ${targetAudience}
+    // Generate 5 different promo items
+    const promoItems = [];
 
-Sugira um brinde criativo e fora do convencional com:
+    for (let i = 0; i < 5; i++) {
+      console.log(`Generating promo item ${i + 1}/5...`);
+
+      // Step 1: Use Gemini Flash to analyze audience and suggest creative promo item
+      const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `Você é um especialista em brindes corporativos criativos do mercado brasileiro. 
+              Sugira um brinde ÚNICO e FORA DO CONVENCIONAL (nada de canetas, cadernos ou chaveiros comuns).
+              Pense em: gadgets tecnológicos inusitados, itens sustentáveis inovadores, acessórios lifestyle diferenciados.
+              IMPORTANTE: Cada sugestão deve ser DIFERENTE das anteriores. Seja criativo e diverso.
+              Responda SEMPRE em português do Brasil.`
+            },
+            {
+              role: 'user',
+              content: `Público-alvo: ${targetAudience}
+
+Esta é a sugestão número ${i + 1} de 5. Sugira um brinde DIFERENTE dos anteriores, criativo e fora do convencional com:
 1. Nome do produto em português
 2. Descrição breve (2-3 linhas) explicando por que é perfeito para esse público
 3. Estimativa de preço unitário em Reais (entre R$20 e R$100)
@@ -52,36 +59,36 @@ PRODUTO: [nome]
 DESCRIÇÃO: [descrição]
 PREÇO: R$ [valor]
 VISUAL: [descrição visual detalhada para mockup, incluindo formato, material, cor, textura]`
-          }
-        ],
-      }),
-    });
+            }
+          ],
+        }),
+      });
 
-    if (!analysisResponse.ok) {
-      const errorText = await analysisResponse.text();
-      console.error('Analysis API error:', analysisResponse.status, errorText);
-      throw new Error(`Failed to analyze audience: ${analysisResponse.status}`);
-    }
+      if (!analysisResponse.ok) {
+        const errorText = await analysisResponse.text();
+        console.error(`Analysis API error for item ${i + 1}:`, analysisResponse.status, errorText);
+        continue; // Skip this item and continue with others
+      }
 
-    const analysisData = await analysisResponse.json();
-    const suggestion = analysisData.choices[0].message.content;
-    console.log('AI Suggestion:', suggestion);
+      const analysisData = await analysisResponse.json();
+      const suggestion = analysisData.choices[0].message.content;
+      console.log(`AI Suggestion ${i + 1}:`, suggestion);
 
-    // Parse the suggestion
-    const productMatch = suggestion.match(/PRODUTO:\s*(.+)/);
-    const descriptionMatch = suggestion.match(/DESCRIÇÃO:\s*(.+?)(?=PREÇO:)/s);
-    const priceMatch = suggestion.match(/PREÇO:\s*R?\$?\s*(\d+(?:,\d{2})?)/);
-    const visualMatch = suggestion.match(/VISUAL:\s*(.+)/s);
+      // Parse the suggestion
+      const productMatch = suggestion.match(/PRODUTO:\s*(.+)/);
+      const descriptionMatch = suggestion.match(/DESCRIÇÃO:\s*(.+?)(?=PREÇO:)/s);
+      const priceMatch = suggestion.match(/PREÇO:\s*R?\$?\s*(\d+(?:,\d{2})?)/);
+      const visualMatch = suggestion.match(/VISUAL:\s*(.+)/s);
 
-    const productName = productMatch ? productMatch[1].trim() : 'Brinde Personalizado';
-    const description = descriptionMatch ? descriptionMatch[1].trim() : suggestion.substring(0, 200);
-    const price = priceMatch ? `R$ ${priceMatch[1]}` : 'R$ 50,00';
-    const visualDescription = visualMatch ? visualMatch[1].trim() : suggestion;
+      const productName = productMatch ? productMatch[1].trim() : `Brinde Personalizado ${i + 1}`;
+      const description = descriptionMatch ? descriptionMatch[1].trim() : suggestion.substring(0, 200);
+      const price = priceMatch ? `R$ ${priceMatch[1]}` : 'R$ 50,00';
+      const visualDescription = visualMatch ? visualMatch[1].trim() : suggestion;
 
-    // Step 2: Generate realistic mockup with logo using Gemini Image Preview
-    console.log('Generating mockup with Gemini Image Preview...');
-    
-    const mockupPrompt = `Ultra high resolution professional product photography. ${visualDescription}
+      // Step 2: Generate realistic mockup with logo using Gemini Image Preview
+      console.log(`Generating mockup ${i + 1}/5 with Gemini Image Preview...`);
+      
+      const mockupPrompt = `Ultra high resolution professional product photography. ${visualDescription}
 
 CRITICAL: The logo must be perfectly applied on the product surface, following these requirements:
 - Logo clearly visible and centered on the main surface
@@ -102,58 +109,68 @@ The logo to be applied is:
 
 Create a photorealistic mockup showing the product with this exact logo professionally applied.`;
 
-    const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: mockupPrompt
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: logoBase64
+      const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image-preview',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: mockupPrompt
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: logoBase64
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        modalities: ['image', 'text']
-      }),
-    });
+              ]
+            }
+          ],
+          modalities: ['image', 'text']
+        }),
+      });
 
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text();
-      console.error('Image generation API error:', imageResponse.status, errorText);
-      throw new Error(`Failed to generate mockup: ${imageResponse.status}`);
-    }
+      if (!imageResponse.ok) {
+        const errorText = await imageResponse.text();
+        console.error(`Image generation API error for item ${i + 1}:`, imageResponse.status, errorText);
+        continue; // Skip this item and continue with others
+      }
 
-    const imageData = await imageResponse.json();
-    const mockupImage = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const imageData = await imageResponse.json();
+      const mockupImage = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!mockupImage) {
-      throw new Error('No image generated in response');
-    }
+      if (!mockupImage) {
+        console.error(`No image generated for item ${i + 1}`);
+        continue;
+      }
 
-    console.log('Successfully generated mockup');
+      console.log(`Successfully generated mockup ${i + 1}/5`);
 
-    return new Response(
-      JSON.stringify({
+      promoItems.push({
         productName,
         description,
         price,
         mockupImage,
         fullSuggestion: suggestion
-      }),
+      });
+    }
+
+    if (promoItems.length === 0) {
+      throw new Error('Failed to generate any promo items');
+    }
+
+    console.log(`Successfully generated ${promoItems.length} promo items`);
+
+    return new Response(
+      JSON.stringify({ items: promoItems }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

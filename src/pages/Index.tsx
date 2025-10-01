@@ -7,17 +7,17 @@ import { Gift } from "lucide-react";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{
+  const [results, setResults] = useState<Array<{
     productName: string;
     description: string;
     price: string;
     mockupImage: string;
-  } | null>(null);
+  }>>([]);
   const { toast } = useToast();
 
   const handleGenerate = async (targetAudience: string, logoBase64: string) => {
     setIsLoading(true);
-    setResult(null);
+    setResults([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-promo-item', {
@@ -33,16 +33,15 @@ const Index = () => {
         throw new Error(data.error);
       }
 
-      setResult({
-        productName: data.productName,
-        description: data.description,
-        price: data.price,
-        mockupImage: data.mockupImage,
-      });
+      if (!data.items || data.items.length === 0) {
+        throw new Error('Nenhum brinde foi gerado');
+      }
+
+      setResults(data.items);
 
       toast({
-        title: "Brinde gerado com sucesso!",
-        description: "Seu brinde personalizado está pronto.",
+        title: `${data.items.length} brindes gerados com sucesso!`,
+        description: "Seus brindes personalizados estão prontos.",
       });
     } catch (error) {
       console.error('Error generating promo item:', error);
@@ -83,11 +82,25 @@ const Index = () => {
           </div>
 
           {/* Result Section */}
-          <div>
-            {result ? (
-              <div className="animate-in fade-in duration-500">
-                <MockupResult {...result} />
-              </div>
+          <div className="space-y-6">
+            {results.length > 0 ? (
+              <>
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {results.length} Ideias de Brindes Personalizados
+                  </h2>
+                  <p className="text-muted-foreground mt-2">
+                    Escolha a melhor opção para sua campanha
+                  </p>
+                </div>
+                <div className="grid gap-6">
+                  {results.map((result, index) => (
+                    <div key={index} className="animate-in fade-in duration-500" style={{ animationDelay: `${index * 100}ms` }}>
+                      <MockupResult {...result} />
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
                 <div className="max-w-sm mx-auto space-y-4">
@@ -98,7 +111,7 @@ const Index = () => {
                     Aguardando geração
                   </h3>
                   <p className="text-muted-foreground">
-                    Preencha o formulário ao lado para gerar seu brinde personalizado
+                    Preencha o formulário ao lado para gerar 5 brindes personalizados
                   </p>
                 </div>
               </div>
