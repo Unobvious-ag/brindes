@@ -200,9 +200,9 @@ Create a photorealistic mockup showing the product with this exact logo professi
         : 'Falha ao gerar brindes. Por favor, tente novamente.';
       
       return new Response(
-        JSON.stringify({ error: errorMessage }),
+        JSON.stringify({ items: [], rateLimited: rateLimited || false, message: errorMessage }),
         {
-          status: 429,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );

@@ -34,7 +34,14 @@ const Index = () => {
       }
 
       if (data.items.length === 0) {
-        throw new Error('Nenhum brinde foi gerado');
+        setResults([]);
+        const message = data.message || 'Limite de requisições atingido. Tente novamente em alguns instantes.';
+        toast({
+          title: message,
+          description: 'Nenhum brinde foi retornado desta vez.',
+        });
+        setIsLoading(false);
+        return;
       }
 
       setResults(data.items);
