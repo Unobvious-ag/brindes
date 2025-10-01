@@ -33,14 +33,18 @@ const Index = () => {
         throw new Error(data.error);
       }
 
-      if (!data.items || data.items.length === 0) {
+      if (data.items.length === 0) {
         throw new Error('Nenhum brinde foi gerado');
       }
 
       setResults(data.items);
 
+      const message = data.message 
+        ? data.message 
+        : `${data.items.length} brindes gerados com sucesso!`;
+
       toast({
-        title: `${data.items.length} brindes gerados com sucesso!`,
+        title: message,
         description: "Seus brindes personalizados estão prontos.",
       });
     } catch (error) {
