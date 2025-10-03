@@ -24,7 +24,19 @@ serve(async (req) => {
 
 TAREFA: Aplicar o logo fornecido de forma PERFEITA e REALISTA no mockup base.
 
-REQUISITOS CRÍTICOS:
+ANÁLISE DE CORES E CONTRASTE (CRÍTICO):
+1. SEMPRE analise as cores dominantes do mockup (fundo/superfície onde o logo será aplicado)
+2. SEMPRE analise as cores do logo fornecido
+3. SE houver baixo contraste (ex: logo preto em fundo preto, logo branco em fundo branco):
+   - Ajuste APENAS as cores do logo para garantir visibilidade perfeita
+   - Use cores contrastantes apropriadas (branco, cinza claro, ou outras cores que mantenham a elegância)
+   - Mantenha a ESTRUTURA e FORMA do logo intactas
+4. SE houver bom contraste natural:
+   - Preserve PERFEITAMENTE todas as cores originais do logo
+   - NÃO altere nenhuma cor da identidade visual
+5. Priorize SEMPRE a legibilidade e profissionalismo do resultado final
+
+REQUISITOS DE APLICAÇÃO:
 1. O logo deve ser aplicado na superfície principal do produto de forma natural
 2. O logo deve seguir a perspectiva e curvatura do mockup
 3. Aplicar iluminação e sombras realistas no logo que correspondam ao mockup
@@ -33,13 +45,14 @@ REQUISITOS CRÍTICOS:
 6. O resultado deve parecer uma foto profissional de produto real
 
 ESPECIFICAÇÕES TÉCNICAS:
+- Análise inteligente de contraste e ajuste automático quando necessário
 - Iluminação profissional de estúdio
 - Alta resolução e nitidez
 - Textura e materiais realistas
 - Perspectiva correta e natural
 - Integração perfeita entre logo e mockup
 
-Crie um mockup profissional e fotorrealista com o logo perfeitamente aplicado.`;
+Crie um mockup profissional e fotorrealista com o logo perfeitamente aplicado, garantindo contraste ideal e preservando a identidade da marca.`;
 
     console.log('Calling Gemini Image Preview API...');
     
