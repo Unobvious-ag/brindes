@@ -18,13 +18,13 @@ export const GeneratorForm = ({ onGenerate, isLoading }: GeneratorFormProps) => 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetAudience.trim() || !logo) {
+    if (!targetAudience.trim()) {
       return;
     }
-    onGenerate(targetAudience, logo, priceRange);
+    onGenerate(targetAudience, logo || '', priceRange);
   };
 
-  const isFormValid = targetAudience.trim().length > 0 && logo !== null;
+  const isFormValid = targetAudience.trim().length > 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

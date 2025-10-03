@@ -46,7 +46,7 @@ export const BrandUploader = ({ onLogoChange }: BrandUploaderProps) => {
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-foreground">
-        Logomarca da Empresa
+        Logomarca da Empresa <span className="text-muted-foreground font-normal">(Opcional)</span>
       </label>
       
       {!preview ? (
