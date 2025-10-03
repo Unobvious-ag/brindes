@@ -126,7 +126,10 @@ VISUAL: [descrição visual]`
         // Step 2: Generate realistic mockup with logo using Gemini Image Preview
         console.log(`Generating mockup ${i + 1}/5 with Gemini Image Preview...`);
         
-        const mockupPrompt = `Ultra high resolution professional product photography. ${visualDescription}
+        const hasLogo = logoBase64 && logoBase64.trim() !== '';
+        
+        const mockupPrompt = hasLogo 
+          ? `Ultra high resolution professional product photography. ${visualDescription}
 
 CRITICAL: The logo must be perfectly applied on the product surface, following these requirements:
 - Logo clearly visible and centered on the main surface
@@ -145,7 +148,34 @@ Product specifications:
 The logo to be applied is: 
 [LOGO WILL BE PROVIDED AS REFERENCE IMAGE]
 
-Create a photorealistic mockup showing the product with this exact logo professionally applied.`;
+Create a photorealistic mockup showing the product with this exact logo professionally applied.`
+          : `Ultra high resolution professional product photography. ${visualDescription}
+
+Product specifications:
+- Professional studio lighting (soft box lighting, white/neutral background)
+- High detail and sharp focus
+- Realistic materials and textures
+- Brazilian market aesthetic
+- Modern and premium appearance
+- Clean product surface ready for logo application
+
+Create a photorealistic mockup of this product in a professional setting.`;
+
+        const messageContent: any[] = [
+          {
+            type: 'text',
+            text: mockupPrompt
+          }
+        ];
+
+        if (hasLogo) {
+          messageContent.push({
+            type: 'image_url',
+            image_url: {
+              url: logoBase64
+            }
+          });
+        }
 
         const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
@@ -158,18 +188,7 @@ Create a photorealistic mockup showing the product with this exact logo professi
             messages: [
               {
                 role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: mockupPrompt
-                  },
-                  {
-                    type: 'image_url',
-                    image_url: {
-                      url: logoBase64
-                    }
-                  }
-                ]
+                content: messageContent
               }
             ],
             modalities: ['image', 'text']
