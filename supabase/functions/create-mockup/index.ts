@@ -12,15 +12,18 @@ serve(async (req) => {
   }
 
   try {
-    const { mockupBase64, logoBase64 } = await req.json();
+    const { mockupBase64, logoBase64, scenarioIdea } = await req.json();
     console.log('Creating custom mockup with logo overlay...');
+    if (scenarioIdea) {
+      console.log('Scenario idea provided:', scenarioIdea);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const prompt = `Você é um especialista em design de mockups profissionais.
+    let prompt = `Você é um especialista em design de mockups profissionais.
 
 TAREFA: Aplicar o logo fornecido de forma PERFEITA e REALISTA no mockup base.
 
@@ -42,9 +45,22 @@ REQUISITOS DE APLICAÇÃO:
 3. Aplicar iluminação e sombras realistas no logo que correspondam ao mockup
 4. O logo deve estar centralizado e com tamanho proporcional (nem muito grande, nem muito pequeno)
 5. Manter a qualidade fotorrealista ultra alta
-6. O resultado deve parecer uma foto profissional de produto real
+6. O resultado deve parecer uma foto profissional de produto real`;
 
-ESPECIFICAÇÕES TÉCNICAS:
+    if (scenarioIdea) {
+      prompt += `\n\nCENÁRIO PERSONALIZADO (APLICAR COM PRIORIDADE):
+O usuário solicitou o seguinte cenário/ambiente para o mockup:
+"${scenarioIdea}"
+
+INSTRUÇÕES PARA O CENÁRIO:
+- Aplique EXATAMENTE o cenário descrito pelo usuário
+- Mantenha o logo perfeitamente integrado ao novo cenário
+- O cenário deve complementar e valorizar o produto e o logo
+- Mantenha o realismo fotográfico e a qualidade profissional
+- Ajuste iluminação, cores de fundo e atmosfera conforme solicitado`;
+    }
+
+    prompt += `\n\nESPECIFICAÇÕES TÉCNICAS:
 - Análise inteligente de contraste e ajuste automático quando necessário
 - Iluminação profissional de estúdio
 - Alta resolução e nitidez

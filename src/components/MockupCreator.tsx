@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Upload, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export const MockupCreator = () => {
   const [mockupImage, setMockupImage] = useState<string>("");
   const [logoImage, setLogoImage] = useState<string>("");
+  const [scenarioIdea, setScenarioIdea] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [resultImage, setResultImage] = useState<string>("");
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export const MockupCreator = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('create-mockup', {
-        body: { mockupBase64: mockupImage, logoBase64: logoImage },
+        body: { mockupBase64: mockupImage, logoBase64: logoImage, scenarioIdea: scenarioIdea.trim() || undefined },
       });
 
       if (error) throw error;
@@ -120,6 +122,22 @@ export const MockupCreator = () => {
                 )}
               </label>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="scenario-input" className="text-lg font-semibold mb-3 block">
+              3. Ideia de Cenário (Opcional)
+            </Label>
+            <Textarea
+              id="scenario-input"
+              placeholder="Ex: ambiente moderno e minimalista, fundo com gradiente suave, iluminação natural..."
+              value={scenarioIdea}
+              onChange={(e) => setScenarioIdea(e.target.value)}
+              className="min-h-[100px] resize-none"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              Descreva o cenário ou ambiente que deseja para seu mockup
+            </p>
           </div>
 
           <Button
