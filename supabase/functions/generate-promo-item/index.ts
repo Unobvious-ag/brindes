@@ -34,43 +34,12 @@ serve(async (req) => {
       }
 
       try {
-        // Step 1: Search for real Brazilian suppliers for this price range
-        console.log(`Searching for Brazilian suppliers in price range ${priceRange}...`);
+        // Step 1: Get AI suggestion for product type first
+        console.log(`Getting product suggestion for price range ${priceRange}...`);
         
         const [minPrice, maxPrice] = priceRange === '100+' ? [100, 500] : priceRange.split('-').map(Number);
-        
-        const searchResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'user',
-                content: `Pesquise fornecedores brasileiros de brindes corporativos na faixa de R$${minPrice} a R$${maxPrice} para o público: ${targetAudience}.
-                
-Liste 2-3 URLs REAIS de fornecedores brasileiros (como Kalunga, Brindes Mix, Crazy Brindes, etc.) que vendem esse tipo de produto.
-Retorne no formato:
-URLS: url1, url2, url3`
-              }
-            ],
-          }),
-        });
 
-        let referenceUrls: string[] = [];
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-          const searchResult = searchData.choices[0].message.content;
-          const urlsMatch = searchResult.match(/URLS:\s*(.+)/);
-          if (urlsMatch) {
-            referenceUrls = urlsMatch[1].split(',').map((url: string) => url.trim()).filter((url: string) => url.startsWith('http'));
-          }
-        }
-
-        // Step 2: Use Gemini Flash to analyze audience and suggest creative promo item
+        // Step 2: Use Gemini Flash to suggest product type and search terms
         const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -82,10 +51,9 @@ URLS: url1, url2, url3`
             messages: [
               {
                 role: 'system',
-                content: `Você é um especialista em brindes corporativos criativos do mercado brasileiro. 
-                Sugira um brinde ÚNICO e FORA DO CONVENCIONAL (nada de canetas, cadernos ou chaveiros comuns).
-                Pense em: gadgets tecnológicos inusitados, itens sustentáveis inovadores, acessórios lifestyle diferenciados.
-                IMPORTANTE: Cada sugestão deve ser DIFERENTE das anteriores. Seja criativo e diverso.
+                content: `Você é um especialista em brindes corporativos do mercado brasileiro. 
+                Sugira um brinde ÚNICO e CRIATIVO que pode ser encontrado em lojas online brasileiras.
+                IMPORTANTE: Cada sugestão deve ser DIFERENTE das anteriores.
                 Responda SEMPRE em português do Brasil.`
               },
               {
@@ -93,19 +61,19 @@ URLS: url1, url2, url3`
                 content: `Público-alvo: ${targetAudience}
 Faixa de preço: R$${minPrice} a R$${maxPrice}
 
-Esta é a sugestão número ${i + 1} de 5. Sugira um brinde DIFERENTE dos anteriores, criativo e REALISTA que pode ser encontrado em fornecedores brasileiros:
-1. Nome do produto em português (produto REAL que existe no mercado)
-2. Descrição breve (2-3 linhas) explicando por que é perfeito para esse público
-3. Preço REAL dentro da faixa solicitada (R$${minPrice} a R$${maxPrice})
-4. Descrição visual detalhada do produto para gerar um mockup fotorrealista
+Esta é a sugestão número ${i + 1} de 5. Sugira um brinde DIFERENTE, criativo e REALISTA:
+1. Nome EXATO do produto (como aparece em lojas)
+2. Descrição breve (2-3 linhas)
+3. Preço estimado dentro da faixa (R$${minPrice} a R$${maxPrice})
+4. TERMO DE BUSCA: palavras-chave específicas para buscar este produto em sites brasileiros
+5. Descrição visual detalhada para mockup
 
-IMPORTANTE: Sugira produtos REAIS que podem ser encontrados em fornecedores como Kalunga, Brindes Mix, etc.
-
-Formato da resposta:
-PRODUTO: [nome]
+Formato:
+PRODUTO: [nome exato]
 DESCRIÇÃO: [descrição]
 PREÇO: R$ [valor]
-VISUAL: [descrição visual detalhada para mockup, incluindo formato, material, cor, textura]`
+BUSCA: [termos de busca específicos]
+VISUAL: [descrição visual]`
               }
             ],
           }),
@@ -131,12 +99,34 @@ VISUAL: [descrição visual detalhada para mockup, incluindo formato, material, 
         const productMatch = suggestion.match(/PRODUTO:\s*(.+)/);
         const descriptionMatch = suggestion.match(/DESCRIÇÃO:\s*(.+?)(?=PREÇO:)/s);
         const priceMatch = suggestion.match(/PREÇO:\s*R?\$?\s*(\d+(?:,\d{2})?)/);
+        const searchTermMatch = suggestion.match(/BUSCA:\s*(.+?)(?=VISUAL:)/s);
         const visualMatch = suggestion.match(/VISUAL:\s*(.+)/s);
 
         const productName = productMatch ? productMatch[1].trim() : `Brinde Personalizado ${i + 1}`;
         const description = descriptionMatch ? descriptionMatch[1].trim() : suggestion.substring(0, 200);
         const price = priceMatch ? `R$ ${priceMatch[1]}` : 'R$ 50,00';
+        const searchTerms = searchTermMatch ? searchTermMatch[1].trim() : productName;
         const visualDescription = visualMatch ? visualMatch[1].trim() : suggestion;
+
+        // Step 3: Search for real product URLs using web search
+        console.log(`Searching web for: ${searchTerms} brindes corporativos brasil...`);
+        
+        const webSearchResponse = await fetch('https://api.search.brave.com/res/v1/web/search', {
+          headers: {
+            'Accept': 'application/json',
+            'X-Subscription-Token': Deno.env.get('BRAVE_SEARCH_API_KEY') || '',
+          },
+        });
+
+        let referenceUrls: string[] = [];
+        
+        // Fallback: construct search URLs for major Brazilian suppliers
+        const searchQuery = encodeURIComponent(`${searchTerms} R$${minPrice}`);
+        referenceUrls = [
+          `https://www.google.com/search?q=${searchQuery}+brindes+site:brindesmix.com.br`,
+          `https://www.google.com/search?q=${searchQuery}+brindes+site:kalunga.com.br`,
+          `https://www.google.com/search?q=${searchQuery}+brindes+corporativos+brasil`,
+        ];
 
         // Add another small delay before image generation
         await new Promise(resolve => setTimeout(resolve, 1000));
