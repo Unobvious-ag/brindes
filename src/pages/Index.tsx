@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GeneratorForm } from "@/components/GeneratorForm";
 import { MockupResult } from "@/components/MockupResult";
 import { MockupCreator } from "@/components/MockupCreator";
+import { ImageCreator } from "@/components/ImageCreator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -88,9 +89,10 @@ const Index = () => {
         </header>
 
         <Tabs defaultValue="generate" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto mb-8 grid-cols-2">
+          <TabsList className="grid w-full max-w-4xl mx-auto mb-8 grid-cols-3">
             <TabsTrigger value="generate">Geração de Brindes</TabsTrigger>
             <TabsTrigger value="mockup">Criação de Mockups</TabsTrigger>
+            <TabsTrigger value="image">Criação de Imagens</TabsTrigger>
           </TabsList>
 
           <TabsContent value="generate">
@@ -143,6 +145,10 @@ const Index = () => {
 
           <TabsContent value="mockup">
             <MockupCreator />
+          </TabsContent>
+
+          <TabsContent value="image">
+            <ImageCreator />
           </TabsContent>
         </Tabs>
       </div>
