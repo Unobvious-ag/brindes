@@ -108,24 +108,16 @@ VISUAL: [descrição visual]`
         const searchTerms = searchTermMatch ? searchTermMatch[1].trim() : productName;
         const visualDescription = visualMatch ? visualMatch[1].trim() : suggestion;
 
-        // Step 3: Search for real product URLs using web search
+        // Step 3: Construct direct search URLs for major Brazilian marketplaces
         console.log(`Searching web for: ${searchTerms} brindes corporativos brasil...`);
         
-        const webSearchResponse = await fetch('https://api.search.brave.com/res/v1/web/search', {
-          headers: {
-            'Accept': 'application/json',
-            'X-Subscription-Token': Deno.env.get('BRAVE_SEARCH_API_KEY') || '',
-          },
-        });
-
-        let referenceUrls: string[] = [];
+        const cleanSearchTerms = searchTerms.replace(/[^\w\s]/g, '').trim();
+        const encodedSearch = encodeURIComponent(cleanSearchTerms);
         
-        // Fallback: construct search URLs for major Brazilian suppliers
-        const searchQuery = encodeURIComponent(`${searchTerms} R$${minPrice}`);
-        referenceUrls = [
-          `https://www.google.com/search?q=${searchQuery}+brindes+site:brindesmix.com.br`,
-          `https://www.google.com/search?q=${searchQuery}+brindes+site:kalunga.com.br`,
-          `https://www.google.com/search?q=${searchQuery}+brindes+corporativos+brasil`,
+        const referenceUrls: string[] = [
+          `https://www.amazon.com.br/s?k=${encodedSearch}+brinde`,
+          `https://lista.mercadolivre.com.br/${encodedSearch.replace(/\s+/g, '-')}-brinde`,
+          `https://www.magazineluiza.com.br/busca/${encodedSearch}`,
         ];
 
         // Add another small delay before image generation
