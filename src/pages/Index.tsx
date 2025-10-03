@@ -14,16 +14,17 @@ const Index = () => {
     description: string;
     price: string;
     mockupImage: string;
+    referenceUrls?: string[];
   }>>([]);
   const { toast } = useToast();
 
-  const handleGenerate = async (targetAudience: string, logoBase64: string) => {
+  const handleGenerate = async (targetAudience: string, logoBase64: string, priceRange: string) => {
     setIsLoading(true);
     setResults([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-promo-item', {
-        body: { targetAudience, logoBase64 },
+        body: { targetAudience, logoBase64, priceRange },
       });
 
       if (error) {

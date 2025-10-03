@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { targetAudience, logoBase64 } = await req.json();
-    console.log('Generating 5 promo items for target audience:', targetAudience);
+    const { targetAudience, logoBase64, priceRange } = await req.json();
+    console.log('Generating 5 promo items for target audience:', targetAudience, 'Price range:', priceRange);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -34,7 +34,43 @@ serve(async (req) => {
       }
 
       try {
-        // Step 1: Use Gemini Flash to analyze audience and suggest creative promo item
+        // Step 1: Search for real Brazilian suppliers for this price range
+        console.log(`Searching for Brazilian suppliers in price range ${priceRange}...`);
+        
+        const [minPrice, maxPrice] = priceRange === '100+' ? [100, 500] : priceRange.split('-').map(Number);
+        
+        const searchResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'user',
+                content: `Pesquise fornecedores brasileiros de brindes corporativos na faixa de R$${minPrice} a R$${maxPrice} para o público: ${targetAudience}.
+                
+Liste 2-3 URLs REAIS de fornecedores brasileiros (como Kalunga, Brindes Mix, Crazy Brindes, etc.) que vendem esse tipo de produto.
+Retorne no formato:
+URLS: url1, url2, url3`
+              }
+            ],
+          }),
+        });
+
+        let referenceUrls: string[] = [];
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          const searchResult = searchData.choices[0].message.content;
+          const urlsMatch = searchResult.match(/URLS:\s*(.+)/);
+          if (urlsMatch) {
+            referenceUrls = urlsMatch[1].split(',').map((url: string) => url.trim()).filter((url: string) => url.startsWith('http'));
+          }
+        }
+
+        // Step 2: Use Gemini Flash to analyze audience and suggest creative promo item
         const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -55,12 +91,15 @@ serve(async (req) => {
               {
                 role: 'user',
                 content: `Público-alvo: ${targetAudience}
+Faixa de preço: R$${minPrice} a R$${maxPrice}
 
-Esta é a sugestão número ${i + 1} de 5. Sugira um brinde DIFERENTE dos anteriores, criativo e fora do convencional com:
-1. Nome do produto em português
+Esta é a sugestão número ${i + 1} de 5. Sugira um brinde DIFERENTE dos anteriores, criativo e REALISTA que pode ser encontrado em fornecedores brasileiros:
+1. Nome do produto em português (produto REAL que existe no mercado)
 2. Descrição breve (2-3 linhas) explicando por que é perfeito para esse público
-3. Estimativa de preço unitário em Reais (entre R$20 e R$100)
+3. Preço REAL dentro da faixa solicitada (R$${minPrice} a R$${maxPrice})
 4. Descrição visual detalhada do produto para gerar um mockup fotorrealista
+
+IMPORTANTE: Sugira produtos REAIS que podem ser encontrados em fornecedores como Kalunga, Brindes Mix, etc.
 
 Formato da resposta:
 PRODUTO: [nome]
@@ -182,6 +221,7 @@ Create a photorealistic mockup showing the product with this exact logo professi
           description,
           price,
           mockupImage,
+          referenceUrls: referenceUrls.length > 0 ? referenceUrls : undefined,
           fullSuggestion: suggestion
         });
 

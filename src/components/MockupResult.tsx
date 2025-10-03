@@ -1,11 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink } from "lucide-react";
 
 interface MockupResultProps {
   productName: string;
   description: string;
   price: string;
   mockupImage: string;
+  referenceUrls?: string[];
 }
 
 export const MockupResult = ({
@@ -13,6 +15,7 @@ export const MockupResult = ({
   description,
   price,
   mockupImage,
+  referenceUrls,
 }: MockupResultProps) => {
   return (
     <Card className="overflow-hidden shadow-xl border-0 bg-card">
@@ -31,6 +34,26 @@ export const MockupResult = ({
           </Badge>
         </div>
         <p className="text-base text-muted-foreground leading-relaxed">{description}</p>
+        
+        {referenceUrls && referenceUrls.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Fornecedores e Referências:</h4>
+            <div className="space-y-1">
+              {referenceUrls.map((url, index) => (
+                <a
+                  key={index}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {new URL(url).hostname}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
