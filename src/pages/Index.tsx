@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { GeneratorForm } from "@/components/GeneratorForm";
 import { MockupResult } from "@/components/MockupResult";
+import { MockupCreator } from "@/components/MockupCreator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import unbvsLogo from "@/assets/unbvs-logo.jpg";
 
 const Index = () => {
@@ -84,51 +86,64 @@ const Index = () => {
           </p>
         </header>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-          {/* Form Section */}
-          <div className="lg:sticky lg:top-8">
-            <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-lg">
-              <GeneratorForm onGenerate={handleGenerate} isLoading={isLoading} />
-            </div>
-          </div>
+        <Tabs defaultValue="generate" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto mb-8 grid-cols-2">
+            <TabsTrigger value="generate">Geração de Brindes</TabsTrigger>
+            <TabsTrigger value="mockup">Criação de Mockups</TabsTrigger>
+          </TabsList>
 
-          {/* Result Section */}
-          <div className="space-y-6">
-            {results.length > 0 ? (
-              <>
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-foreground">
-                    {results.length} Ideias de Brindes Personalizados
-                  </h2>
-                  <p className="text-muted-foreground mt-2">
-                    Escolha a melhor opção para sua campanha
-                  </p>
-                </div>
-                <div className="grid gap-6">
-                  {results.map((result, index) => (
-                    <div key={index} className="animate-in fade-in duration-500" style={{ animationDelay: `${index * 100}ms` }}>
-                      <MockupResult {...result} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
-                <div className="max-w-sm mx-auto space-y-4">
-                  <div className="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center p-3 shadow-md">
-                    <img src={unbvsLogo} alt="UNBVS Logo" className="w-full h-auto" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground">
-                    Aguardando geração
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Preencha o formulário ao lado para gerar 5 brindes personalizados
-                  </p>
+          <TabsContent value="generate">
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+              {/* Form Section */}
+              <div className="lg:sticky lg:top-8">
+                <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-lg">
+                  <GeneratorForm onGenerate={handleGenerate} isLoading={isLoading} />
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+
+              {/* Result Section */}
+              <div className="space-y-6">
+                {results.length > 0 ? (
+                  <>
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl font-bold text-foreground">
+                        {results.length} Ideias de Brindes Personalizados
+                      </h2>
+                      <p className="text-muted-foreground mt-2">
+                        Escolha a melhor opção para sua campanha
+                      </p>
+                    </div>
+                    <div className="grid gap-6">
+                      {results.map((result, index) => (
+                        <div key={index} className="animate-in fade-in duration-500" style={{ animationDelay: `${index * 100}ms` }}>
+                          <MockupResult {...result} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
+                    <div className="max-w-sm mx-auto space-y-4">
+                      <div className="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center p-3 shadow-md">
+                        <img src={unbvsLogo} alt="UNBVS Logo" className="w-full h-auto" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        Aguardando geração
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Preencha o formulário ao lado para gerar 5 brindes personalizados
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="mockup">
+            <MockupCreator />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
